@@ -28,6 +28,7 @@ from datetime import datetime
 from socket import socket, AF_INET, SOCK_STREAM
 from struct import pack, unpack
 import sys
+import ssl
 
 try:
     from ssl import wrap_socket
@@ -132,7 +133,8 @@ class APNsConnection(object):
         self._socket = socket(AF_INET, SOCK_STREAM)
         self._socket.connect((self.server, self.port))
         self._ssl = wrap_socket(self._socket, self.key_file, self.cert_file)
-
+        self._ssl.setblocking(False)
+        
     def _disconnect(self):
         if self._socket:
             self._socket.close()
@@ -143,10 +145,42 @@ class APNsConnection(object):
         return self._ssl
 
     def read(self, n=None):
-        return self._connection().read(n)
+        try:
+            ret = self._connection().recv(n)
+            if ret:
+                self.close()
+                
+            return ret
+        except ssl.SSLZeroReturnError:
+            # SSL protocol alerted close. We have a nice shutdown here.
+            self.close()
+            return None
+        except ssl.SSLWantReadError:
+            # non-blocking mode and there is no recv data.
+            # no need to reset connection
+            return None
 
     def write(self, string):
         return self._connection().write(string)
+    
+    def close(self):
+        if self._socket is not None:
+            if self._ssl is not None:
+                try:
+                    self._connection().close()
+                except:
+                    pass
+                
+            try:
+                self._socket.close()
+            except:
+                pass
+            
+            self._socket = None
+            self._ssl = None
+    
+    def is_closed(self):
+        return self._socket is None
 
 
 class PayloadAlert(object):
