@@ -161,7 +161,14 @@ class APNsConnection(object):
             return None
 
     def write(self, string):
-        return self._connection().write(string)
+        try:
+            ret = self._connection().write(string)
+            return ret
+        except IOError:
+            # BrokenPipeError will be caught here.
+            # connection has been closed or failed
+            self.close()
+            return None
     
     def close(self):
         if self._socket is not None:
@@ -382,5 +389,5 @@ class GatewayConnection(APNsConnection):
         self.write(self._get_notification(token_hex, payload))
 
     def send_notification_multiple(self, frame):
-        self.write(frame.get_frame())
+        return self.write(frame.get_frame())
 
