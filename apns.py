@@ -302,6 +302,14 @@ class Frame(object):
                 self.frame_data)
 
 
+class Message(object):
+    def __init__(self, token=None, payload=None, identifier=None, expiry=None, priority=None):
+        self.token = token
+        self.payload = payload
+        self.identifier = identifier
+        self.expiry = expiry
+        self.priority = priority
+        
 class FeedbackConnection(APNsConnection):
     """
     A class representing a connection to the APNs Feedback server
@@ -390,4 +398,9 @@ class GatewayConnection(APNsConnection):
 
     def send_notification_multiple(self, frame):
         return self.write(frame.get_frame())
+    
+    def send(self, message):
+        token_hex = message.token
+        payload = message.payload
+        self.write(self._get_notification(token_hex, payload))
 
