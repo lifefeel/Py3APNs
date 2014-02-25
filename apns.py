@@ -394,7 +394,7 @@ class GatewayConnection(APNsConnection):
         return notification
 
     def send_notification(self, token_hex, payload):
-        self.write(self._get_notification(token_hex, payload))
+        return self.write(self._get_notification(token_hex, payload))
 
     def send_notification_multiple(self, frame):
         return self.write(frame.get_frame())
@@ -402,5 +402,5 @@ class GatewayConnection(APNsConnection):
     def send(self, message):
         token_hex = message.token
         payload = message.payload
-        self.write(self._get_notification(token_hex, payload))
+        return self.write(self._get_notification(token_hex, payload))
 
