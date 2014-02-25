@@ -402,5 +402,12 @@ class GatewayConnection(APNsConnection):
     def send(self, message):
         token_hex = message.token
         payload = message.payload
-        return self.write(self._get_notification(token_hex, payload))
+        identifier = message.identifier
+        expiry = message.expiry
+        priority = message.priority
+        
+        frame = Frame()
+        frame.add_item(token_hex, payload, identifier, expiry, priority)
+        
+        return self.write(frame.get_frame())
 
